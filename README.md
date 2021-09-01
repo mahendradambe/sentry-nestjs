@@ -17,16 +17,17 @@
 ### Installation
 - Using Yarn
 ```bash
-yarn add sentry-nestjs
+yarn add sentry-nestjs @sentry/node @sentry/tracing
 ```
 - Using NPM
 ```bash
-npm install sentry-nestjs
+npm install sentry-nestjs @sentry/node @sentry/tracing
 ```
 
 ### Usage
  1. Register Module
 ```typescript
+import { LogLevel } from '@sentry/types'
 import { SentryModule } from 'sentry-nestjs'
 
 @Module( {
