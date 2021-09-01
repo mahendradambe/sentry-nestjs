@@ -3,10 +3,10 @@
 	"license": "MIT",
 	"main": "dist/index.js",
 	"typings": "dist/index.d.ts",
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/mahendradambe/sentry-nestjs"
-    },
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/mahendradambe/sentry-nestjs"
+	},
 	"files": [
 		"dist",
 		"src"
@@ -43,6 +43,7 @@
 		"@nestjs/core": "^7.0.0 || ^8.0.0",
 		"@nestjs/graphql": "^9.0.2",
 		"@nestjs/platform-express": "^7.0.0 || ^8.0.0",
+		"@nestjs/testing": "^8.0.6",
 		"@sentry/node": "^6.11.0",
 		"@sentry/tracing": "^6.11.0",
 		"cz-conventional-changelog": "^3.3.0",
