@@ -8,7 +8,7 @@ describe( "SentryModule", () => {
 
         describe( 'and called with empty object', () => {
 
-            it( 'should provide SentryService', async () => {
+            it( 'should provide `SentryService`', async () => {
 
                 const app: TestingModule = await Test.createTestingModule( {
                     imports: [
@@ -31,7 +31,7 @@ describe( "SentryModule", () => {
 
         describe( 'and called with `useFactory`', () => {
 
-            it( 'should provide SentryService', async () => {
+            it( 'should provide `SentryService`', async () => {
 
                 const app: TestingModule = await Test.createTestingModule( {
 
@@ -56,7 +56,7 @@ describe( "SentryModule", () => {
 
         describe( 'and called with `useClass`', () => {
 
-            it( 'should provide SentryService', async () => {
+            it( 'should provide `SentryService`', async () => {
 
                 class OptionsFactory {
 
