@@ -45,8 +45,6 @@ describe( "SentryModule", () => {
 
                 const sentryService = app.get<SentryService>( SENTRY );
 
-                console.log( sentryService )
-
                 expect( sentryService ).toBeDefined()
                 expect( sentryService ).toBeInstanceOf( SentryService )
 

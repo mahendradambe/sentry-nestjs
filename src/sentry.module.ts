@@ -87,8 +87,7 @@ export class SentryModule {
                 },
                 {
                     provide: SENTRY,
-                    useFactory: options.useFactory,
-                    inject: options.inject ?? []
+                    useClass: SentryService
                 }
             ]
 
@@ -102,8 +101,7 @@ export class SentryModule {
             },
             {
                 provide: SENTRY,
-                useFactory: async ( optionsFactory: SentryModuleOptionsFactory ) => optionsFactory.createNestjsSentryModuleOptions(),
-                inject: [ options.useExisting ?? options.useClass ]
+                useClass: SentryService
             }
         ]
 
