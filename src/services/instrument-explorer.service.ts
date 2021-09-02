@@ -80,9 +80,14 @@ export class InstrumentExplorer implements OnModuleInit {
                 ...traceOptions
             }
 
-            const parent = this.sentryService.currentSpan
-                ?? this.sentryService.currentTransaction
-                ?? this.sentryService.createTransaction( { ...spanContext, name: spanContext.op } )
+            // we want to know if there's already an existing transaction or span
+            const maybeParent = Boolean( this.sentryService.currentSpan ?? this.sentryService.currentTransaction )
+
+            // otherwise, we create a custom transaction
+            const parent = maybeParent
+                ? this.sentryService.currentSpan ?? this.sentryService.currentTransaction
+                : this.sentryService.createTransaction( { ...spanContext, name: spanContext.op } )
+
 
             const span = parent.startChild( spanContext )
 
@@ -96,6 +101,12 @@ export class InstrumentExplorer implements OnModuleInit {
             if ( _original.constructor.name === 'AsyncFunction' ) {
 
                 return result.finally( () => {
+
+                    if( !maybeParent ) {
+
+                        parent.finish()
+
+                    }
 
                     span.finish()
 
