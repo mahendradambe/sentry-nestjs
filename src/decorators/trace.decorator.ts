@@ -1,6 +1,7 @@
 import { SetMetadata } from "@nestjs/common"
 import { SENTRY_TRACE } from "../constants/instrument.tokens"
 import {
+    TraceDecorator,
     TraceOptions,
     TraceOptionsWithSpan
 } from "../interfaces"
@@ -33,8 +34,7 @@ const getTraceOptions = (
 
 }
 
-
-export const Trace = ( nameOrOptions?: string | TraceOptions | boolean, injectSpan  = false ): MethodDecorator =>
+export const Trace: TraceDecorator = ( nameOrOptions?: string | TraceOptions | boolean, injectSpan  = false ): MethodDecorator =>
     ( target: Record<string, any>, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<any> ) => {
 
         const options = getTraceOptions( propertyKey, nameOrOptions, injectSpan )

@@ -19,6 +19,15 @@ export interface InjectSpanOption {
 
 export type TraceOptionsWithSpan = TraceOptions & InjectSpanOption
 
+export type TraceDecorator = {
+
+    ( name?: string, injectSpan?: boolean ): MethodDecorator;
+
+    ( option?: TraceOptions, injectSpan?: boolean ): MethodDecorator;
+
+}
+
+
 export interface EnhancedHttpRequest extends Handlers.ExpressRequest {
 
     span?: Span;
