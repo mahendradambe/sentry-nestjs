@@ -1,5 +1,5 @@
 import { Handlers } from "@sentry/node"
-import { Span, Transaction } from "@sentry/types"
+import { Span, Transaction, Primitive } from "@sentry/types"
 
 export interface TraceOptions {
 
@@ -7,7 +7,7 @@ export interface TraceOptions {
 
     description?: string;
 
-    tags?: Record<string, string>;
+    tags?: Record<string, Primitive>;
 
 }
 
