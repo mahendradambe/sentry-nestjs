@@ -16,8 +16,11 @@ export type SentryModuleOptionsFactory = {
 export interface SentryModuleAsyncOptions extends Pick<ModuleMetadata, 'imports'> {
 
     inject?: any[];
+
     useClass?: Type<SentryModuleOptionsFactory>;
+
     useExisting?: Type<SentryModuleOptionsFactory>;
+
     useFactory?: ( ...args: any[] ) => Promise<SentryModuleOptions> | SentryModuleOptions;
 
 }

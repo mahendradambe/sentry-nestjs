@@ -2,7 +2,6 @@ import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from "@nes
 import { GqlContextType } from '@nestjs/graphql'
 import { Handlers } from '@sentry/node';
 import { Scope, Span, Transaction } from "@sentry/types";
-import { Request } from 'express';
 import { tap } from "rxjs";
 import { InjectSentry } from "../decorators";
 import { EnhancedHttpRequest } from '../interfaces';
@@ -98,7 +97,6 @@ export class TraceInterceptor implements NestInterceptor {
             this.sentryService.captureException( exception )
 
         }
-
 
     }
 

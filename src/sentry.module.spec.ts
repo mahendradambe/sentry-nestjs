@@ -1,6 +1,6 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import { SentryModule, SentryService } from "../src";
-import { SENTRY } from "../src/constants/sentry-nestjs.tokens";
+import { SentryModule, SentryService } from ".";
+import { SENTRY } from "./constants/sentry-nestjs.tokens";
 
 describe( "SentryModule", () => {
 
