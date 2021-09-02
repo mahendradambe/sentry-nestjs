@@ -1,1 +1,1 @@
-export * from './trace-interceptor.interceptor'
+export * from './trace.interceptor'

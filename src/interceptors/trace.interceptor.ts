@@ -1,7 +1,7 @@
 import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from "@nestjs/common";
-import { GqlContextType } from '@nestjs/graphql'
+import { GqlContextType } from '@nestjs/graphql';
 import { Handlers } from '@sentry/node';
-import { Scope, Span, Transaction } from "@sentry/types";
+import { Scope } from "@sentry/types";
 import { tap } from "rxjs";
 import { InjectSentry } from "../decorators";
 import { EnhancedHttpRequest } from '../interfaces';
@@ -18,15 +18,28 @@ export class TraceInterceptor implements NestInterceptor {
 
         const contextType = context.getType<GqlContextType>()
 
-        const transaction = this.sentryService.currentTransaction
-        const span = transaction.startChild()
-        this.sentryService.setSpanOnCurrentScope( span )
+        // a transaction maybe present with express integrations
+        const maybeTransaction = Boolean( this.sentryService.currentTransaction )
 
+        const transaction = maybeTransaction
+            ? this.sentryService.currentTransaction
+            : this.sentryService
+                .currentHub
+                .startTransaction( { name: context.getHandler().name } )
+
+        // if this is a custom transaction, we want to know so we can finish it
+        if ( !maybeTransaction ) {
+            ( transaction as any ).__customTrace = true
+        }
+
+        const span = transaction.startChild()
+
+        this.sentryService.setSpanOnCurrentScope( span );
 
         switch( contextType ) {
 
             case 'http':
-                return this.handleHttp( context, next, transaction, span )
+                return this.handleHttp( context, next )
 
             case 'rpc':
                 return next.handle();
@@ -41,13 +54,17 @@ export class TraceInterceptor implements NestInterceptor {
 
     }
 
-    private handleHttp( context: ExecutionContext, next: CallHandler, transaction: Transaction, span: Span ) {
+    private handleHttp( context: ExecutionContext, next: CallHandler ) {
+
+        const transaction = this.sentryService.currentTransaction
+        const span = this.sentryService.currentSpan
 
         const httpRequest = context.switchToHttp().getRequest<EnhancedHttpRequest>()
 
-        transaction.op = transaction.name
+        transaction.name = `${httpRequest.method} ${httpRequest.route.path}`
+        transaction.op = `${httpRequest.method} ${httpRequest.route.path}`
         span.op = `${context.getClass().name}#${context.getHandler().name}`
-        span.description = httpRequest.method
+        span.description = httpRequest.url
         httpRequest.span = span
         httpRequest.transaction = transaction
 
@@ -58,6 +75,13 @@ export class TraceInterceptor implements NestInterceptor {
                 next: ( value ) => {
                     this.captureHttpData( this.sentryService.currentScope, httpRequest, value )
                     span.finish()
+
+                    if( ( transaction as any ).__customTrace ) {
+
+                        transaction.finish()
+
+                    }
+
                 },
                 error: exception => this.sentryService
                     .instance()
