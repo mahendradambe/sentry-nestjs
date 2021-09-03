@@ -21,6 +21,8 @@ export type TraceOptionsWithSpan = TraceOptions & InjectSpanOption
 
 export type TraceDecorator = {
 
+    ( injectSpan?: boolean ): MethodDecorator;
+
     ( name?: string, injectSpan?: boolean ): MethodDecorator;
 
     ( option?: TraceOptions, injectSpan?: boolean ): MethodDecorator;
