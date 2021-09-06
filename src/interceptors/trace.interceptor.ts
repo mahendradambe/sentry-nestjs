@@ -1,4 +1,5 @@
 import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from "@nestjs/common";
+import { HttpArgumentsHost } from "@nestjs/common/interfaces";
 import { GqlContextType } from '@nestjs/graphql';
 import { Handlers } from '@sentry/node';
 import { Scope } from "@sentry/types";
@@ -59,8 +60,11 @@ export class TraceInterceptor implements NestInterceptor {
         const transaction = this.sentryService.currentTransaction
         const span = this.sentryService.currentSpan
 
-        const httpRequest = context.switchToHttp().getRequest<EnhancedHttpRequest>()
+        const httpContext = context.switchToHttp()
+        const httpRequest = httpContext.getRequest<EnhancedHttpRequest>()
 
+        transaction.setData( 'baseUrl', httpRequest.baseUrl )
+        transaction.setData( 'query', httpRequest.query )
         transaction.name = `${httpRequest.method} ${httpRequest.route.path}`
         transaction.op = `${httpRequest.method} ${httpRequest.route.path}`
         span.op = `${context.getClass().name}#${context.getHandler().name}`
@@ -73,10 +77,10 @@ export class TraceInterceptor implements NestInterceptor {
         return response.pipe(
             tap( {
                 next: ( value ) => {
-                    this.captureHttpData( this.sentryService.currentScope, httpRequest, value )
+                    this.captureHttpData( this.sentryService.currentScope, httpContext, value )
                     span.finish()
 
-                    if( ( transaction as any ).__customTrace ) {
+                    if ( ( transaction as any ).__customTrace ) {
 
                         transaction.finish()
 
@@ -86,16 +90,20 @@ export class TraceInterceptor implements NestInterceptor {
                 error: exception => this.sentryService
                     .instance()
                     .withScope( scope =>
-                        this.captureHttpData( scope, httpRequest, null, exception )
+                        this.captureHttpData( scope, httpContext, null, exception )
                     ),
             } )
         )
 
     }
 
-    private captureHttpData( scope: Scope, request: EnhancedHttpRequest, data?: any, exception?: any ) {
+    private captureHttpData( scope: Scope, httpArgs: HttpArgumentsHost, data?: any, exception?: any ) {
 
-        const eventData = Handlers.parseRequest( {}, request, {} )
+        const req = httpArgs.getRequest()
+        const res = httpArgs.getResponse()
+        const statusCode = res.statusCode
+
+        const eventData = Handlers.parseRequest( {}, req, {} )
 
 
         if ( eventData.extra ) {
@@ -112,7 +120,10 @@ export class TraceInterceptor implements NestInterceptor {
 
         if ( data ) {
 
-            scope.getTransaction().setData( 'res', data )
+            const transaction = scope.getTransaction()
+            transaction.setData( 'res', data )
+            transaction.setHttpStatus( statusCode )
+            transaction.setTag( 'http.status_code', statusCode )
 
         }
 
