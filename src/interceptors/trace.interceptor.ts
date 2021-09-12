@@ -1,23 +1,40 @@
 import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from "@nestjs/common";
-import { HttpArgumentsHost } from "@nestjs/common/interfaces";
 import { GqlContextType } from '@nestjs/graphql';
-import { Handlers } from '@sentry/node';
-import { Scope } from "@sentry/types";
 import { tap } from "rxjs";
 import { InjectSentry } from "../decorators";
-import { EnhancedHttpRequest } from '../interfaces';
+import { TraceInterceptorService } from "../interfaces/trace-interceptor.interface";
 import { SentryService } from "../services";
+import { HttpInterceptorService } from "./http-interceptor.service";
+import { NoopInterceptorService } from "./noop-interceptor.service";
 
 @Injectable()
 export class TraceInterceptor implements NestInterceptor {
 
     constructor(
         @InjectSentry() private readonly sentryService: SentryService,
+        private readonly httpInterceptorService: HttpInterceptorService,
+        private readonly noopInterceptorService: NoopInterceptorService
     ) { }
 
     intercept( context: ExecutionContext, next: CallHandler ) {
 
         const contextType = context.getType<GqlContextType>()
+
+        const interceptorService = this.getInterceptorForContext( contextType )
+
+        const response = this.handleRequest( context, next )
+
+        return response.pipe(
+            tap( {
+                next: ( value ) => interceptorService.onSuccess( value, context ),
+                error: exception => interceptorService.onFailure( exception, context )
+            } )
+
+        )
+
+    }
+
+    handleRequest( context: ExecutionContext, next: CallHandler ) {
 
         // a transaction maybe present with express integrations
         const maybeTransaction = Boolean( this.sentryService.currentTransaction )
@@ -30,108 +47,39 @@ export class TraceInterceptor implements NestInterceptor {
 
         // if this is a custom transaction, we want to know so we can finish it
         if ( !maybeTransaction ) {
+
             ( transaction as any ).__customTrace = true
+
         }
 
         const span = transaction.startChild()
 
         this.sentryService.setSpanOnCurrentScope( span );
 
+        this.getInterceptorForContext( context.getType<GqlContextType>() ).onRequest( context )
+
+        return next.handle()
+
+    }
+
+    private getInterceptorForContext( contextType: GqlContextType ): TraceInterceptorService {
+
         switch( contextType ) {
 
             case 'http':
-                return this.handleHttp( context, next )
+                return this.httpInterceptorService
 
             case 'rpc':
-                return next.handle();
+                return this.noopInterceptorService
 
             case 'ws':
-                return next.handle();
+                return this.noopInterceptorService
 
             case 'graphql':
-                return next.handle()
+                return this.noopInterceptorService
 
         }
 
-    }
-
-    private handleHttp( context: ExecutionContext, next: CallHandler ) {
-
-        const transaction = this.sentryService.currentTransaction
-        const span = this.sentryService.currentSpan
-
-        const httpContext = context.switchToHttp()
-        const httpRequest = httpContext.getRequest<EnhancedHttpRequest>()
-
-        transaction.setData( 'baseUrl', httpRequest.baseUrl )
-        transaction.setData( 'query', httpRequest.query )
-        transaction.name = `${httpRequest.method} ${httpRequest.route.path}`
-        transaction.op = `${httpRequest.method} ${httpRequest.route.path}`
-        span.op = `${context.getClass().name}#${context.getHandler().name}`
-        span.description = httpRequest.url
-        httpRequest.span = span
-        httpRequest.transaction = transaction
-
-        const response = next.handle()
-
-        return response.pipe(
-            tap( {
-                next: ( value ) => {
-                    this.captureHttpData( this.sentryService.currentScope, httpContext, value )
-                    span.finish()
-
-                    if ( ( transaction as any ).__customTrace ) {
-
-                        transaction.finish()
-
-                    }
-
-                },
-                error: exception => this.sentryService
-                    .instance()
-                    .withScope( scope =>
-                        this.captureHttpData( scope, httpContext, null, exception )
-                    ),
-            } )
-        )
-
-    }
-
-    private captureHttpData( scope: Scope, httpArgs: HttpArgumentsHost, data?: any, exception?: any ) {
-
-        const req = httpArgs.getRequest()
-        const res = httpArgs.getResponse()
-        const statusCode = res.statusCode
-
-        const eventData = Handlers.parseRequest( {}, req, {} )
-
-
-        if ( eventData.extra ) {
-
-            scope.setExtras( eventData.extra )
-
-        }
-
-        if ( eventData.user ) {
-
-            scope.setUser( eventData.user )
-
-        }
-
-        if ( data ) {
-
-            const transaction = scope.getTransaction()
-            transaction.setData( 'res', data )
-            transaction.setHttpStatus( statusCode )
-            transaction.setTag( 'http.status_code', statusCode )
-
-        }
-
-        if ( exception ) {
-
-            this.sentryService.captureException( exception )
-
-        }
 
     }
 

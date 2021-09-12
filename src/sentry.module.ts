@@ -6,10 +6,12 @@ import {
     SentryModuleOptions,
     SentryModuleOptionsFactory
 } from './interfaces';
+import { HttpInterceptorService } from './interceptors/http-interceptor.service';
 import { SentryService } from './services';
 import { BootstrapSentry } from './services/bootstrap-sentry.service';
 import { InstrumentExplorer } from './services/instrument-explorer.service';
 import { InstrumentMetadataAccessor } from './services/instrument-metadata.accessor';
+import { NoopInterceptorService } from './interceptors/noop-interceptor.service';
 
 @Module( {
     imports: [ DiscoveryModule ],
@@ -17,7 +19,13 @@ import { InstrumentMetadataAccessor } from './services/instrument-metadata.acces
         BootstrapSentry,
         InstrumentMetadataAccessor,
         InstrumentExplorer,
+        HttpInterceptorService,
+        NoopInterceptorService
     ],
+    exports: [
+        HttpInterceptorService,
+        NoopInterceptorService
+    ]
 } )
 export class SentryModule {
 
