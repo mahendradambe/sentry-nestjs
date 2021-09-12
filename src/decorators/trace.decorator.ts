@@ -10,34 +10,26 @@ const propertyKeyToString = ( key: string | symbol ) => typeof key === 'string' 
 
 const getTraceOptions = (
     propertyKey: string | symbol,
-    nameOrOptionOrInjectSpan: string | TraceOptions | boolean,
-    injectSpan = false
+    nameOrOptions: string | TraceOptions,
 ): TraceOptionsWithSpan => {
 
-    const options = typeof nameOrOptionOrInjectSpan === 'string'
+    const options = typeof nameOrOptions === 'string'
         ? {
-            name: nameOrOptionOrInjectSpan,
-            injectSpan
-        }
-        : typeof nameOrOptionOrInjectSpan !== 'boolean'
-        ? {
-            ...nameOrOptionOrInjectSpan,
-            injectSpan,
-            name: nameOrOptionOrInjectSpan?.name ?? propertyKeyToString( propertyKey )
+            name: nameOrOptions,
         }
         : {
-            injectSpan: nameOrOptionOrInjectSpan,
-            name: propertyKeyToString( propertyKey )
+            ...nameOrOptions,
+            name: nameOrOptions?.name ?? propertyKeyToString( propertyKey )
         }
 
     return options
 
 }
 
-export const Trace: TraceDecorator = ( nameOrOptions?: string | TraceOptions | boolean, injectSpan  = false ): MethodDecorator =>
+export const Trace: TraceDecorator = ( nameOrOptions?: string | TraceOptions ): MethodDecorator =>
     ( target: Record<string, any>, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<any> ) => {
 
-        const options = getTraceOptions( propertyKey, nameOrOptions, injectSpan )
+        const options = getTraceOptions( propertyKey, nameOrOptions )
 
         SetMetadata( SENTRY_TRACE, options )( target, propertyKey, descriptor )
 

@@ -3,7 +3,7 @@ import { Span, Transaction, Primitive } from "@sentry/types"
 
 export interface TraceOptions {
 
-    name: string;
+    name?: string;
 
     description?: string;
 
@@ -11,21 +11,13 @@ export interface TraceOptions {
 
 }
 
-export interface InjectSpanOption {
-
-    injectSpan?: boolean;
-
-}
-
-export type TraceOptionsWithSpan = TraceOptions & InjectSpanOption
+export type TraceOptionsWithSpan = TraceOptions
 
 export type TraceDecorator = {
 
-    ( injectSpan?: boolean ): MethodDecorator;
+    ( name?: string ): MethodDecorator;
 
-    ( name?: string, injectSpan?: boolean ): MethodDecorator;
-
-    ( option?: TraceOptions, injectSpan?: boolean ): MethodDecorator;
+    ( option?: TraceOptions ): MethodDecorator;
 
 }
 

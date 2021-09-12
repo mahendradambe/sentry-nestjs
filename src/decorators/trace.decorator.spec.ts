@@ -28,7 +28,7 @@ describe( 'Trace', () => {
 
             expect(
                 Reflect.getMetadata( SENTRY_TRACE, someService.someMethod )
-            ).toStrictEqual( { name: someService.someMethod.name, injectSpan: false } )
+            ).toStrictEqual( { name: someService.someMethod.name } )
 
         } )
 
@@ -51,55 +51,7 @@ describe( 'Trace', () => {
 
             expect(
                 Reflect.getMetadata( SENTRY_TRACE, someService.someMethod )
-            ).toStrictEqual( { name, injectSpan: false } )
-
-        } )
-
-    } )
-
-    describe( 'and called with a boolean as first arg', () => {
-
-        describe( 'and it is `true`', () => {
-
-            class SomeService {
-
-                @Trace( true )
-                someMethod() {
-                    return 'hello'
-                }
-
-            }
-            const someService = new SomeService()
-
-            it( 'should define `SENTRY_TRACE` metadata with `TraceOptionsWithSpan`', () => {
-
-                expect(
-                    Reflect.getMetadata( SENTRY_TRACE, someService.someMethod )
-                ).toStrictEqual( { name: someService.someMethod.name, injectSpan: true } )
-
-            } )
-
-        } )
-
-        describe( 'and it is `false`', () => {
-
-            class SomeService {
-
-                @Trace( false )
-                someMethod() {
-                    return 'hello'
-                }
-
-            }
-            const someService = new SomeService()
-
-            it( 'should define `SENTRY_TRACE` metadata with `TraceOptionsWithSpan`', () => {
-
-                expect(
-                    Reflect.getMetadata( SENTRY_TRACE, someService.someMethod )
-                ).toStrictEqual( { name: someService.someMethod.name, injectSpan: false } )
-
-            } )
+            ).toStrictEqual( { name } )
 
         } )
 
@@ -107,82 +59,64 @@ describe( 'Trace', () => {
 
     describe( 'and called with `options` as first arg', () => {
 
-        const options: TraceOptions = {
-            name: 'someOtherMethod',
-            description: 'some other method description',
-            tags: {
-                'prop': 'description '
-            }
-        }
-        class SomeService {
+        describe( 'and when `options.name` is not provided', () => {
 
-            @Trace( options )
-            someMethod() {
-                return 'hello'
-            }
+            it( 'should use the method\'s name as the name', () => {
 
-        }
-        const someService = new SomeService()
-
-        it( 'should define `SENTRY_TRACE` metadata with `TraceOptionsWithSpan`', () => {
-
-            expect(
-                Reflect.getMetadata( SENTRY_TRACE, someService.someMethod )
-            ).toStrictEqual( { ...options, injectSpan: false } )
-
-        } )
-
-    } )
-
-    describe( 'and called with boolean as second arg', () => {
-
-        const name = 'someOtherMethod'
-
-        describe( 'and it is `true`', () => {
-
-            class SomeService {
-
-                @Trace( name, true )
-                someMethod() {
-                    return 'hello'
+                const options: TraceOptions = {
+                    description: 'some other method description',
+                    tags: {
+                        'prop': 'description '
+                    }
                 }
+                class SomeService {
 
-            }
+                    @Trace( options )
+                    someMethod() {
+                        return 'hello'
+                    }
 
-            const someService = new SomeService()
-
-            it( 'should define `SENTRY_TRACE` metadata with `TraceOptionsWithSpan`', () => {
+                }
+                const someService = new SomeService()
 
                 expect(
                     Reflect.getMetadata( SENTRY_TRACE, someService.someMethod )
-                ).toStrictEqual( { name, injectSpan: true } )
+                ).toStrictEqual( { ...options, name: someService.someMethod.name } )
 
             } )
 
         } )
 
-        describe( 'and it is `false`', () => {
-
-            class SomeService {
-
-                @Trace( name, false )
-                someMethod() {
-                    return 'hello'
-                }
-
-            }
-
-            const someService = new SomeService()
+        describe( 'and when options is completely defined', () => {
 
             it( 'should define `SENTRY_TRACE` metadata with `TraceOptionsWithSpan`', () => {
 
+                const options: TraceOptions = {
+                    name: 'someOtherMethod',
+                    description: 'some other method description',
+                    tags: {
+                        'prop': 'description '
+                    }
+                }
+                class SomeService {
+
+                    @Trace( options )
+                    someMethod() {
+                        return 'hello'
+                    }
+
+                }
+                const someService = new SomeService()
+
                 expect(
                     Reflect.getMetadata( SENTRY_TRACE, someService.someMethod )
-                ).toStrictEqual( { name, injectSpan: false } )
+                ).toStrictEqual( { ...options } )
 
             } )
 
         } )
+
+
 
     } )
 

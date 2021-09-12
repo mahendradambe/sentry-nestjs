@@ -69,7 +69,7 @@ export class InstrumentExplorer implements OnModuleInit {
         const instrumentName = this.metadataAccessor.getInstrumentName( metatype ) ?? instance.constructor.name
 
         const traceOptions: TraceOptionsWithSpan = this.metadataAccessor
-            .getTraceMetadata( instance[ key ] ) ?? { injectSpan: undefined, name: instance[ key ].name }
+            .getTraceMetadata( instance[ key ] ) ?? { name: instance[ key ].name }
 
         const _original = instance[ key ]
 
@@ -93,10 +93,7 @@ export class InstrumentExplorer implements OnModuleInit {
 
             this.sentryService.setSpanOnCurrentScope( span )
 
-            const result = _original.call(
-                instance,
-                ...( traceOptions.injectSpan ? args.concat( span ) : args )
-            )
+            const result = _original.call( instance )
 
             if ( _original.constructor.name === 'AsyncFunction' ) {
 
