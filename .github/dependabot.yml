@@ -5,7 +5,5 @@ updates:
     schedule:
       interval: "daily"
     commit-message:
-      # Prefix all commit messages with "npm"
       prefix: "chore(deps): "
-      include: "scope"
     target-branch: "next"
